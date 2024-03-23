@@ -14,6 +14,7 @@ import { notesCollection, db } from "./firebase"
 export default function App() {
     const [notes, setNotes] = React.useState([])
     const [currentNoteId, setCurrentNoteId] = React.useState("")
+    const [tempNoteText, setTempNoteText] = React.useState("")
 
     const currentNote =
         notes.find(note => note.id === currentNoteId)
@@ -39,6 +40,10 @@ export default function App() {
         }
     }, [notes])
 
+    React.useEffect(()=>{
+        setTempNoteText(currentNote?.body)
+    }, [currentNote])
+
     async function createNewNote() {
         const newNote = {
             body: "# Type your markdown note's title here",
@@ -48,6 +53,15 @@ export default function App() {
         const newNoteRef = await addDoc(notesCollection, newNote)
         setCurrentNoteId(newNoteRef.id)
     }
+
+    React.useEffect(()=>{
+        const id=setTimeout(()=>{
+            if(tempNoteText!==currentNote.body){
+                updateNote(tempNoteText)
+            }
+        },500)
+        return ()=>{clearTimeout(id)}
+    },[tempNoteText])
 
     async function updateNote(text) {
         const docRef = doc(db, "notes", currentNoteId)
@@ -77,8 +91,8 @@ export default function App() {
                             deleteNote={deleteNote}
                         />
                         <Editor
-                            currentNote={currentNote}
-                            updateNote={updateNote}
+                            tempNoteText={tempNoteText}
+                            setTempNoteText={setTempNoteText}
                         />
                     </Split>
                     :
